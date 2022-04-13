@@ -26,12 +26,7 @@ function createMenu() {
     leftArrow.addEventListener("click", scroll);
     slider.append(leftArrow);
 
-    let rightArrow = document.createElement("img");
-    rightArrow.setAttribute("src", "Graphics/arrowRight.png");
-    rightArrow.setAttribute("id", "rightArrow");
-    rightArrow.classList.add("arrow");
-    rightArrow.addEventListener("click", scroll);
-    slider.append(rightArrow);
+    
 
     for (let i = 1; i <= 5; i++) {
         let img = document.createElement("img");
@@ -52,6 +47,13 @@ function createMenu() {
     setTimeout(() => {
         selectedPicture.scrollLeft = 150;
     }, 50);
+
+    let rightArrow = document.createElement("img");
+    rightArrow.setAttribute("src", "Graphics/arrowRight.png");
+    rightArrow.setAttribute("id", "rightArrow");
+    rightArrow.classList.add("arrow");
+    rightArrow.addEventListener("click", scroll);
+    slider.append(rightArrow);
 
     let buttons = document.createElement("div");
     buttons.setAttribute("id", "buttons");
@@ -95,8 +97,303 @@ function createMenu() {
 let main = document.createElement("div");
 let columns, width, height;
 
-function createBoard(e) {
+function findBlack(n, m) {
+    for (let o = n - 1; o <= n + 1; o += 2) {
+        let id = "pole_" + o + "_" + m;
+        let sibling = document.getElementById(id);
+        if (sibling != null && sibling.classList.contains("black")) {
+            return id;
+        }
+    }
 
+    for (let o = m - 1; o <= m + 1; o += 2) {
+        let id = "pole_" + n + "_" + o;
+        let sibling = document.getElementById(id);
+        if (sibling != null && sibling.classList.contains("black")) {
+            return id;
+        }
+    }
+}
+
+function createBoard(e) {
+    main.setAttribute("id", "main");
+    main.innerHTML = "";
+    container.appendChild(main);
+
+    width = main.clientWidth;
+    height = main.clientHeight;
+    columns = e.target.id.split("_")[1];
+    let topPosition = 0;
+    let leftPosition = 0;
+    let w = width / columns;
+    let h = height / columns;
+
+    for (let i = 1; i <= columns; i++) {
+        for (let j = 1; j <= columns; j++) {
+            let pole = document.createElement("div");
+            pole.setAttribute("id", "pole_" + i + "_" + j);
+            pole.classList.add("pole");
+            pole.style.width = w + "px";
+            pole.style.height = h + "px";
+            pole.dataset.x = j;
+            pole.dataset.y = i;
+
+            leftPosition = "-" + (w * (j - 1));
+            topPosition = "-" + (w * (i - 1));
+            position = leftPosition + "px " + topPosition + "px";
+            pole.style.backgroundPosition = position;
+
+            if (i == columns && j == columns) {
+                pole.classList.add("black");
+            } else {
+                selectedImageUrl = document.getElementById("selected").childNodes[1].getAttribute("src");
+                pole.style.backgroundImage = "url(" + selectedImageUrl + ")";
+            }
+
+            pole.addEventListener("click", onClick)
+            main.appendChild(pole);
+        }
+    }
+    shuffle();
+}
+
+function onClick() {
+    let i = parseInt(this.id.split("_")[1]);
+    let j = parseInt(this.id.split("_")[2]);
+    let id = "pole_" + i + "_" + j;
+    let klocek = findBlack(i, j);
+    if (klocek == null) {
+        return;
+    }
+    move(id);
+    checkBoard();
+}
+
+function move(id) {
+    klocek = document.getElementById(id);
+    let black = document.getElementsByClassName("black")[0];
+    let tmpStylePosition = klocek.style.backgroundPosition;
+    black.style.backgroundImage = "url(" + selectedImageUrl + ")";
+    klocek.style.backgroundImage = "";
+
+    let tmpDatasetX = klocek.dataset.x;
+    let tmpDatasetY = klocek.dataset.y;
+    klocek.dataset.x = black.dataset.x;
+    klocek.dataset.y = black.dataset.y;
+    black.dataset.x = tmpDatasetX;
+    black.dataset.y = tmpDatasetY;
+
+    black.classList.remove("black");
+    klocek.classList.add("black");
+    black.style.backgroundPosition = tmpStylePosition;
+}
+
+function checkBoard() {
+    for (let i = 1; i <= columns; i++) {
+        for (let j = 1; j <= columns; j++) {
+            let pole = document.getElementById("pole_" + i + "_" + j);
+            if (pole.dataset.x != j || pole.dataset.y != i) {
+                return;
+            }
+        }
+    }
+    gameTime();
+}
+
+function modal(wyniki) {
+    let alertDiv = document.createElement("div");
+    alertDiv.setAttribute("id", "modal");
+    let span = document.createElement("span");
+    span.classList.add("closebtn");
+    span.innerHTML = "&times;";
+    span.addEventListener("click", function () {
+        this.parentElement.style.display = 'none'
+    })
+
+    let header = document.createElement("h1");
+    header.innerText = "ZWYCIĘSTWO!";
+    let wynik = document.createElement("h2");
+    wynik.innerText = "Twój czas to: " + string;
+    let top = document.createElement("h2");
+    top.innerText = "TOP 10: ";
+    let magicDiv = document.createElement("div");
+    magicDiv.setAttribute("id", "magic");
+    magicDiv.append(span);
+    magicDiv.append(header);
+    magicDiv.append(wynik);
+    magicDiv.append(top);
+
+    for (let i = 0; i < wyniki.length; i++) {
+        let line = document.createElement("h3");
+        line.innerText = (i + 1) + ". " + wyniki[i][0] + ": " + wyniki[i][2];
+        magicDiv.append(line);
+    }
+
+    alertDiv.style.display = "block";
+    alertDiv.append(magicDiv);
+    let black = document.getElementsByClassName("black")[0];
+    black.classList.remove("black");
+    black.style.backgroundImage = "url(" + selectedImageUrl + ")";
+
+    let w = width / columns;
+    let h = height / columns;
+
+    leftPosition = "-" + (w * (columns - 1));
+    topPosition = "-" + (w * (columns - 1));
+    position = leftPosition + "px " + topPosition + "px";
+    black.style.backgroundPosition = position;
+
+    container.append(alertDiv);
+    let modal = document.getElementById('modal');
+    modal.style.display = "block";
+    span.onclick = function () {
+        modal.style.display = "none";
+        alertDiv.style.display = "none";
+    }
+    window.onclick = function (event) {
+        if (event.target == modal) {
+            modal.style.display = "none";
+            alertDiv.style.display = "none";
+        }
+    }
+}
+
+let start, clockInterval;
+
+function shuffle() {
+    let tab = [];
+    for (let i = 0; i <= 3/*columns * columns * 10*/; i++) {
+        setTimeout(moveRandom, 60 * i);
+    }
+    setTimeout(function () {
+        start = +new Date();
+        clockInterval = setInterval(countTime, 1000 / 60);
+    }, 180/*columns * columns * 10*/);
+}
+
+function moveRandom() {
+    let black = document.getElementsByClassName("black")[0];
+    tab = [];
+    let xBlack = parseInt(black.id.split("_")[1]);
+    let yBlack = parseInt(black.id.split("_")[2]);
+
+    if (document.getElementById("pole_" + xBlack + "_" + (yBlack - 1))) {   //up
+        tab.push("pole_" + xBlack + "_" + (yBlack - 1));
+    }
+    if (document.getElementById("pole_" + (xBlack + 1) + "_" + yBlack)) {   //right
+        tab.push("pole_" + (xBlack + 1) + "_" + yBlack);
+    }
+    if (document.getElementById("pole_" + (xBlack - 1) + "_" + yBlack)) {   //left
+        tab.push("pole_" + (xBlack - 1) + "_" + yBlack);
+    }
+    if (document.getElementById("pole_" + xBlack + "_" + (yBlack + 1))) {   //down
+        tab.push("pole_" + xBlack + "_" + (yBlack + 1));
+    }
+
+    let randomItem = tab[Math.floor(Math.random() * tab.length)];
+    move(randomItem);
+}
+
+function scroll(e) {
+    console.log("klik")
+    let selected = document.getElementById("selected");
+    //let scroll = selected.scrollLeft;
+    selected.style.scrollBehavior = "auto";
+    //TODO: poprawić pixele na procenty
+    if (e.target.id == "leftArrow") {
+        selected.insertBefore(selected.childNodes[selected.childElementCount - 1], selected.childNodes[0])
+        selected.scrollLeft = 300;
+        selected.style.scrollBehavior = "smooth";
+        selected.scrollLeft = 150;
+    } else if (e.target.id == "rightArrow") {
+        selected.insertBefore(selected.childNodes[0], null)
+        selected.scrollLeft = 0;
+        selected.style.scrollBehavior = "smooth";
+        selected.scrollLeft = 150;
+    }
+}
+
+function time(cyferki) {
+    //let date = new Date();
+
+    for (let i = 0; i < cyferki.length; i++) {
+        let img = document.getElementById("timer").childNodes[i];
+        let src = document.getElementById("timer").childNodes[i].getAttribute("src");
+
+        if (cyferki[i] == ".") {
+            src = "Graphics/dot.gif";
+        } else {
+            src = "Graphics/" + (cyferki[i]) + ".gif";
+        }
+        img.setAttribute("src", src);
+    }
+}
+
+let string, milliseconds;
+
+function countTime() {
+    let actualTime = +new Date();
+    let difference = actualTime - start;
+    milliseconds = difference;
+
+    let ms = difference % 1000;
+    difference -= ms;
+    difference /= 1000;
+    let s = difference % 60;
+    difference -= s;
+    difference /= 60;
+    let min = difference % 60;
+    difference -= min;
+    difference /= 60;
+    let h = difference % 60;
+    difference -= min;
+
+    ms = ("0" + ms).slice(-3);
+    s = ("0" + s).slice(-2);
+    min = ("0" + min).slice(-2);
+    h = ("0" + h).slice(-2);
+    string = h + ":" + min + ":" + s + "." + ms;
+    time(string);
+}
+
+function gameTime() {
+    let cookieName = "wyniki" + columns;
+    let ciasteczkaWyniki = getCookieValue(cookieName);
+    let wyniki = [];
+
+    if (ciasteczkaWyniki != "") {
+        wyniki = JSON.parse(ciasteczkaWyniki);
+    }
+
+    let nick = document.getElementsByTagName("input")[0].value;
+    if (nick == "") {
+        nick = "Guest";
+    }
+
+    let cookie = [nick, milliseconds, string];
+    wyniki.push(cookie);
+    wyniki.sort(sortFunction);
+
+    function sortFunction(a, b) {
+        if (a[1] === b[1]) {
+            return 0;
+        } else {
+            return (a[1] < b[1]) ? -1 : 1;
+        }
+    }
+
+    if (wyniki.length > 10) {
+        wyniki.pop();
+    }
+
+    document.cookie = `${cookieName}=` + JSON.stringify(wyniki) + "; expires=Tue, 19 Jan 2038 03:14:07 UTC";
+    clearInterval(clockInterval);
+    modal(wyniki);
+}
+
+function getCookieValue(a) {
+    let b = document.cookie.match('(^|;)\\s*' + a + '\\s*=\\s*([^;]+)');
+    return b ? b.pop() : '';
 }
 
 createPage();
