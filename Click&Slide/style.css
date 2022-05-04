@@ -4,6 +4,10 @@
     font-family: Verdana, Geneva, Tahoma, sans-serif;
 }
 
+body {
+    min-width: 800px;
+}
+
 img {
     width: 150px;
 }
@@ -24,7 +28,7 @@ body {
     margin-top: 40px;
 }
 
-.pole {
+.field {
     box-sizing: border-box;
     background-repeat: no-repeat;
 }

@@ -30,8 +30,6 @@ function createMenu() {
 
     for (let i = 1; i <= 5; i++) {
         let img = document.createElement("img");
-
-        // TODO: przetestować działanie bez warunku
         if (i == 1) {
             img.setAttribute("src", "Graphics/" + 5 + ".jpg");
         } else {
@@ -82,14 +80,14 @@ function createMenu() {
     menu.appendChild(label);
 
     for (let i = 1; i <= 12; i++) {
-        let cyfra = document.createElement("img");
-        timer.appendChild(cyfra);
+        let number = document.createElement("img");
+        timer.appendChild(number);
         if (i == 3 || i == 6) {
-            cyfra.setAttribute("src", "Graphics/colon.gif");
+            number.setAttribute("src", "Graphics/colon.gif");
         } else if (i == 9) {
-            cyfra.setAttribute("src", "Graphics/dot.gif");
+            number.setAttribute("src", "Graphics/dot.gif");
         } else {
-            cyfra.setAttribute("src", "Graphics/0.gif");
+            number.setAttribute("src", "Graphics/0.gif");
         }
     }
 }
@@ -99,7 +97,7 @@ let columns, width, height;
 
 function findBlack(n, m) {
     for (let o = n - 1; o <= n + 1; o += 2) {
-        let id = "pole_" + o + "_" + m;
+        let id = "field_" + o + "_" + m;
         let sibling = document.getElementById(id);
         if (sibling != null && sibling.classList.contains("black")) {
             return id;
@@ -107,7 +105,7 @@ function findBlack(n, m) {
     }
 
     for (let o = m - 1; o <= m + 1; o += 2) {
-        let id = "pole_" + n + "_" + o;
+        let id = "field_" + n + "_" + o;
         let sibling = document.getElementById(id);
         if (sibling != null && sibling.classList.contains("black")) {
             return id;
@@ -130,28 +128,28 @@ function createBoard(e) {
 
     for (let i = 1; i <= columns; i++) {
         for (let j = 1; j <= columns; j++) {
-            let pole = document.createElement("div");
-            pole.setAttribute("id", "pole_" + i + "_" + j);
-            pole.classList.add("pole");
-            pole.style.width = w + "px";
-            pole.style.height = h + "px";
-            pole.dataset.x = j;
-            pole.dataset.y = i;
+            let field = document.createElement("div");
+            field.setAttribute("id", "field_" + i + "_" + j);
+            field.classList.add("field");
+            field.style.width = w + "px";
+            field.style.height = h + "px";
+            field.dataset.x = j;
+            field.dataset.y = i;
 
             leftPosition = "-" + (w * (j - 1));
             topPosition = "-" + (w * (i - 1));
             position = leftPosition + "px " + topPosition + "px";
-            pole.style.backgroundPosition = position;
+            field.style.backgroundPosition = position;
 
             if (i == columns && j == columns) {
-                pole.classList.add("black");
+                field.classList.add("black");
             } else {
                 selectedImageUrl = document.getElementById("selected").childNodes[1].getAttribute("src");
-                pole.style.backgroundImage = "url(" + selectedImageUrl + ")";
+                field.style.backgroundImage = "url(" + selectedImageUrl + ")";
             }
 
-            pole.addEventListener("click", onClick)
-            main.appendChild(pole);
+            field.addEventListener("click", onClick)
+            main.appendChild(field);
         }
     }
     shuffle();
@@ -160,9 +158,9 @@ function createBoard(e) {
 function onClick() {
     let i = parseInt(this.id.split("_")[1]);
     let j = parseInt(this.id.split("_")[2]);
-    let id = "pole_" + i + "_" + j;
-    let klocek = findBlack(i, j);
-    if (klocek == null) {
+    let id = "field_" + i + "_" + j;
+    let block = findBlack(i, j);
+    if (block == null) {
         return;
     }
     move(id);
@@ -191,8 +189,8 @@ function move(id) {
 function checkBoard() {
     for (let i = 1; i <= columns; i++) {
         for (let j = 1; j <= columns; j++) {
-            let pole = document.getElementById("pole_" + i + "_" + j);
-            if (pole.dataset.x != j || pole.dataset.y != i) {
+            let field = document.getElementById("field_" + i + "_" + j);
+            if (field.dataset.x != j || field.dataset.y != i) {
                 return;
             }
         }
@@ -200,7 +198,7 @@ function checkBoard() {
     gameTime();
 }
 
-function modal(wyniki) {
+function modal(results) {
     let alertDiv = document.createElement("div");
     alertDiv.setAttribute("id", "modal");
     let span = document.createElement("span");
@@ -212,20 +210,20 @@ function modal(wyniki) {
 
     let header = document.createElement("h1");
     header.innerText = "ZWYCIĘSTWO!";
-    let wynik = document.createElement("h2");
-    wynik.innerText = "Twój czas to: " + string;
+    let result = document.createElement("h2");
+    result.innerText = "Twój czas to: " + string;
     let top = document.createElement("h2");
     top.innerText = "TOP 10: ";
     let magicDiv = document.createElement("div");
     magicDiv.setAttribute("id", "magic");
     magicDiv.append(span);
     magicDiv.append(header);
-    magicDiv.append(wynik);
+    magicDiv.append(result);
     magicDiv.append(top);
 
-    for (let i = 0; i < wyniki.length; i++) {
+    for (let i = 0; i < results.length; i++) {
         let line = document.createElement("h3");
-        line.innerText = (i + 1) + ". " + wyniki[i][0] + ": " + wyniki[i][2];
+        line.innerText = (i + 1) + ". " + results[i][0] + ": " + results[i][2];
         magicDiv.append(line);
     }
 
@@ -262,13 +260,14 @@ let start, clockInterval;
 
 function shuffle() {
     let tab = [];
-    for (let i = 0; i <= 3/*columns * columns * 10*/; i++) {
+    let repeat = 3; /*columns * columns * 10*/
+    for (let i = 0; i <= repeat; i++) {
         setTimeout(moveRandom, 60 * i);
     }
     setTimeout(function () {
         start = +new Date();
         clockInterval = setInterval(countTime, 1000 / 60);
-    }, 180/*columns * columns * 10*/);
+    }, 60 * repeat);
 }
 
 function moveRandom() {
@@ -277,17 +276,17 @@ function moveRandom() {
     let xBlack = parseInt(black.id.split("_")[1]);
     let yBlack = parseInt(black.id.split("_")[2]);
 
-    if (document.getElementById("pole_" + xBlack + "_" + (yBlack - 1))) {   //up
-        tab.push("pole_" + xBlack + "_" + (yBlack - 1));
+    if (document.getElementById("field_" + xBlack + "_" + (yBlack - 1))) {   //up
+        tab.push("field_" + xBlack + "_" + (yBlack - 1));
     }
-    if (document.getElementById("pole_" + (xBlack + 1) + "_" + yBlack)) {   //right
-        tab.push("pole_" + (xBlack + 1) + "_" + yBlack);
+    if (document.getElementById("field_" + (xBlack + 1) + "_" + yBlack)) {   //right
+        tab.push("field_" + (xBlack + 1) + "_" + yBlack);
     }
-    if (document.getElementById("pole_" + (xBlack - 1) + "_" + yBlack)) {   //left
-        tab.push("pole_" + (xBlack - 1) + "_" + yBlack);
+    if (document.getElementById("field_" + (xBlack - 1) + "_" + yBlack)) {   //left
+        tab.push("field_" + (xBlack - 1) + "_" + yBlack);
     }
-    if (document.getElementById("pole_" + xBlack + "_" + (yBlack + 1))) {   //down
-        tab.push("pole_" + xBlack + "_" + (yBlack + 1));
+    if (document.getElementById("field_" + xBlack + "_" + (yBlack + 1))) {   //down
+        tab.push("field_" + xBlack + "_" + (yBlack + 1));
     }
 
     let randomItem = tab[Math.floor(Math.random() * tab.length)];
@@ -295,7 +294,6 @@ function moveRandom() {
 }
 
 function scroll(e) {
-    console.log("klik")
     let selected = document.getElementById("selected");
     //let scroll = selected.scrollLeft;
     selected.style.scrollBehavior = "auto";
@@ -313,17 +311,17 @@ function scroll(e) {
     }
 }
 
-function time(cyferki) {
+function time(numbers) {
     //let date = new Date();
 
-    for (let i = 0; i < cyferki.length; i++) {
+    for (let i = 0; i < numbers.length; i++) {
         let img = document.getElementById("timer").childNodes[i];
         let src = document.getElementById("timer").childNodes[i].getAttribute("src");
 
-        if (cyferki[i] == ".") {
+        if (numbers[i] == ".") {
             src = "Graphics/dot.gif";
         } else {
-            src = "Graphics/" + (cyferki[i]) + ".gif";
+            src = "Graphics/" + (numbers[i]) + ".gif";
         }
         img.setAttribute("src", src);
     }
